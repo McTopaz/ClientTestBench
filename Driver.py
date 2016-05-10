@@ -1,76 +1,254 @@
 import os
 import sys
 import socket
+import serial
+import xml.etree.ElementTree as ET
 
 '''
-	Syntax: IpDriver.py localIP, localPort, remoteIP, remotePort, protocol, timeout, request
+	Syntax: Driver.py <configurationFile> <request>
 	
 	Parameters in:
-		localIP: 	The IP-address to send from.
-		localPort: 	The port to send from.
-		remoteIP: 	The IP-address to send to.
-		remotePort: The port to send to.
-		protocol: 	UDP och TCP protocol.
-		timeout: 	Read timeout.
-		request: 	The data to send. Specified as one long byte-array with no spaces.
+		configurationFile:	The configuration file to setup the driver after.
+		request: 			The data to send. Specified as one long byte-array with no spaces.
 		
 	Parameters out:
 		response: 	The received data. Specified as one long byte-array with no spaces.
 '''
 
-# Send and receive data with UDP.
-def UDP(local, remote, timout, request):
-	udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+# =============================================================================
+# === Classes =================================================================
+# =============================================================================
+
+# Holds data for UDP or TCP communication.
+class NetworkSettings:
 	
-	# Only bind to IP-address and port if specified.
-	if local != None:
-		udp.bind(local)
+	def __init__(self, local, remote, protocol):
+		self.local = local			# Tuple containing IP-address and port for the local end point.
+		self.remote = remot			# Tuple containing IP-address and port for the remote end point.
+		self.protocol = protocol	# Either UDP or TCP protocols.
+
+# Holds data for serial communication.		
+class SerialSettings:
 	
-	udp.settimeout(timeout)
-	udp.sendto(request, remot)
-	response, endpoint = udp.recvfrom(1024)
-	udp.close()
-	return respone
-	
-# Send and receive data with TCP.
-def TCP(local, remote, timeout, request):
-	tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	
-	# Only bind to IP-address and port if specified.
-	if local != None:
-		tcp.bind(local)
+	def __init__(self, port, baudRate, dataBits, parity, stopBits):
+		self.port = port
+		self.baudrate = baudrate
+		self.bytesize=dataBits
+		self.parity = parity
+		self.stopbits = stopBits
+			
+
+# The base class of all drivers.			
+class Driver:
+	# Init the driver.
+	def __init__(self, configurationFile):
+		# Init the configuration file and parse its XML-content.
+		self.configurationFile = configurationFile	# Save the configuration file.
+		self.xmlFile = ET.parse(sys.argv[1])		# Parse the configuration file to an XML-file.
+		self.root = self.xmlFile.getroot()			# Get the root XML-file in the XML-file.
 		
-	tcp.settimeout(timeout)
-	tcp.connect(remote)
-	tcp.send(request, remot)
-	response = tcp.recv(1024)
-	tcp.close()
-	return respone
-	
-	
-def CheckIP(ip):
-	pass
-	
-local = ()		# Local IP and port as tuple.
-remote = ()		# Remote IP and port as tuple.
-protocol = ""
-timeout = 0
-request = []
+		# Read the configuration file.
+		self.timeout = self.ReadTimeout()	# Get the driver's timeout.
 
-# ============
-# === Main ===
-# ============
+	# Read the driver's settings.
+	def ReadSettings(self):
+		# Note: Override in a derived class.
+		pass
+		
+	# Open the driver.
+	def Open(self):
+		# Note: Override in a derived class.
+		pass
+		
+	# Close the driver.
+	def Close(self):
+		# Note: Override in a derived class.
+		pass
+		
+	# Send a request with the driver.
+	def Send(self, request):
+		# Note: Override in a derived class.
+		pass
+		
+	# Receive a response with the driver.
+	def Receive(self):
+		# Note: Override in a derived class.
+		pass
 
-# Use UDP to send and receive data.
-if protocol == "UDP":
-	response = UDP(local, remote, timeout, request)
-	print(response)
+# The base class of all network drivers.
+class NetworkDriver(Driver):
+	# Init the network driver.
+	def __init__(self, configurationFile):
+		Base.__init__(self, configurationFile)
+		self.settings = self.ReadSettings()
 
-# Use TCP to send and receive data.
-elif protocol = "TCP":
-	response = TCP(local, remote, timeout, request)
-	print(response)
+	# Read the network settings from the configuration file.
+	def ReadSettings(self):
+		# Get IP-address and port for the local endpoint.
+		localIP = self.root[2][2][0].attrib["IP"]
+		localPort = self.root[2][2][0].attrib["Port"]
+		local = (localIP, localPort)
+		
+		# Get IP-address and port for the remote endpoint.
+		remoteIP = self.root[2][2][1].attrib["IP"]
+		remotePort = self.root[2][2][1].attrib["Port"]
+		remote = (remoteIP, remotePort)
+		
+		# Get the protocol
+		protocol = self.root[2][2][2].text
+		
+		return NetworkSettings(local, remote, protocol)
+
+# Represent a UDP-driver.		
+class UdpDriver(NetworkDriver):
+	# Init the UDP-driver.
+	def __init__(self, configurationFile):
+		Base.__init__(self, configurationFile)
+		
+		# Setup the UDP-socket.
+		self.udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		self.udp.settimeout(self.tiemout)
+		
+	def Open(self):
+		# Bind to local end point.
+		if self.settings.local:
+			self.udp.bind(self.settings.local)
 	
-# Unknown protocol.
+	def Close(self):
+		self.udp.close()
+	
+	def Send(self, request):
+		self.udp.sendto(request, self.settings.remote)
+		
+	def Receive(self):
+		response, endpoint = self.udp.recvfrom(1024)
+		return response
+		
+# Represent a TCP-driver.		
+class TcpDriver(NetworkDriver):
+	
+	# Init the TCP-driver.
+	def __init__(self, configurationFile):
+		Base.__init__(self, configurationFile)
+		
+		# Setup the TCP-socket.
+		self.tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.tcp.settimeout(self.tiemout)
+		
+	def Open(self):
+		# Bind to local end point.
+		if tcp.settings.local:
+			self.tcp.bind(self.settings.local)
+	
+		# Connect to the remote endpoint.
+		self.tcp.connect(self.settings.remote)
+	
+	def Close(self):
+		self.tcp.close()
+	
+	def Send(self, request):
+		self.tcp.send(request)
+		
+	def Receive(self):
+		response = self.tcp.recv(1024)
+		return response
+	
+# The base class of all serial drivers.		
+class SerialDriver(Driver):
+	# Init the serial driver.
+	def __init__(self, configurationFile):
+		Base.__init__(self, configurationFile)
+		self.settings = self.ReadSettings()
+
+	# Read the serial settings from the configuration file.
+	def ReadSettings(self):
+		
+		# Read the serial settings from the configuration file.
+		port = self.root[2][3][0].text
+		baudrate = self.root[2][3][1].text
+		dataBits = self.root[2][3][2].text
+		parity = self.root[2][3][3].text
+		stopBits = self.root[2][3][4].text
+		
+		return SerialSettings(port, baudRate, dataBits, parity, stopBits)
+
+# Represent a serial-driver.			
+class SerialPort(SerialDriver):
+	# Init the serial port.
+	def __init__(self, configurationFile):
+		Base.__init__(self, configurationFile)
+		
+		self.ser = serial.Serial()
+		self.ser.port = port
+		self.ser.baudrate = baudrate
+		self.ser.bytesize=dataBits
+		self.ser.parity = parity
+		self.ser.stopbits = stopBits
+		self.ser.timeout = timeout
+	
+	def Open(self):
+		self.ser.open()
+		
+	def Close(self):
+		self.ser.close()
+		
+	def Send(self, request):
+		self.ser.write(request)
+		
+	def Receive(self):
+		response = self.ser.read(1024)
+		return response
+	
+# =============================================================================
+# === Main ====================================================================
+# =============================================================================
+
+if len(sys.argv) < 3:
+	file = "%s%s"%(os.path.splitext(os.path.basename(sys.argv[0]))[0], os.path.splitext(os.path.basename(sys.argv[0]))[1])
+	print("Error: Too few arguments. ", end="")
+	print("%s <configuration file path> <request>"%(file))
+	sys.exit()
+
+# Make sure the configuration XML-file exist.
+if os.path.isfile(sys.argv[1]) == False:
+	print("Error: Configuration file don't exist.")
+	sys.exit()
+
+if sys.argv[2] == None or sys.argv[2] == "":
+	print("Error: No request specified.")
+	sys.exit()
+	
+configurationFile = sys.argv[1]			# Gets the configuration file.
+request = sys.argv[2]					# Gets the request.
+
+xmlFile = ET.parse(configurationFile)	# Parse the configuration's XML content.
+root = xmlFile.getroot()				# Gets root element in XML-file.
+type = root[2].attrib["Type"]			# Gets type in XML-file.
+
+driver = None	# Represent the driver to send the request and receive the response.
+
+# Get what driver to use.
+if type == "Network":
+	protocol = root[2][2][2].text
+	
+	if protocol == "UDP":
+		driver = UdpDriver(configurationFile)	# UDP driver.
+	elif protocol == "TCP":
+		driver = TcpDriver(configurationFile)	# TCP driver.
+	else
+		print("Error: Unknown protocol.")
+		sys.exit()
+	
+elif type == "Serial":
+	driver = SerialPort(configurationFile)		# Serial driver.
 else:
-	pass
+	print("Error: Unknown type.")
+	sys.exit()
+
+# Run the driver.
+driver.Open()					# Open connection.
+driver.Send(request)			# Send the request.
+response = driver.Receive()		# Receive the response.
+driver.Close()					# Close connection.
+
+print(response)

@@ -251,7 +251,7 @@ def CreateDefaultConfiguration():
 # ============
 		
 # Existing configuration file is specified.
-elif len(sys.argv) == 2 and os.path.isfile(sys.argv[1]):
+if len(sys.argv) == 2 and os.path.isfile(sys.argv[1]):
 	xmlFile = ET.parse(sys.argv[1])				# Open the XML-file.
 	AlterConfiguration(xmlFile, sys.argv[1])	# Alter the content of the XML-file.
 
