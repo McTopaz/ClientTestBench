@@ -254,7 +254,7 @@ else:
 	sys.exit()
 
 print(request)
-request = bytearray.fromhex(request)
+request = bytearray.fromhex(request)	# Convert to a byte array.
 	
 # Run the driver.
 driver.Open()					# Open connection.

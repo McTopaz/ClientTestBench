@@ -204,7 +204,7 @@ def AlterConfiguration(xmlFile, saveFilePath):
 
 # Create a new XML-file with default settings.
 def CreateDefaultConfiguration():
-	root = ET.Element("Client")
+	root = ET.Element("ClientTestBench")
 	
 	# Source node.
 	source = ET.SubElement(root, "Source")
