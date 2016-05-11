@@ -253,7 +253,7 @@ else:
 	print("Error: Unknown type.")
 	sys.exit()
 
-print(request)
+#print(request)
 request = bytearray.fromhex(request)	# Convert to a byte array.
 	
 # Run the driver.
