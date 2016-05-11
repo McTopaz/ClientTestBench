@@ -24,7 +24,7 @@ class NetworkSettings:
 	
 	def __init__(self, local, remote, protocol):
 		self.local = local			# Tuple containing IP-address and port for the local end point.
-		self.remote = remot			# Tuple containing IP-address and port for the remote end point.
+		self.remote = remote		# Tuple containing IP-address and port for the remote end point.
 		self.protocol = protocol	# Either UDP or TCP protocols.
 
 # Holds data for serial communication.		
@@ -32,10 +32,10 @@ class SerialSettings:
 	
 	def __init__(self, port, baudRate, dataBits, parity, stopBits):
 		self.port = port
-		self.baudrate = baudrate
-		self.bytesize=dataBits
+		self.baudRate = baudRate
+		self.dataBits = dataBits
 		self.parity = parity
-		self.stopbits = stopBits
+		self.stopBits = stopBits
 			
 
 # The base class of all drivers.			
@@ -48,7 +48,7 @@ class Driver:
 		self.root = self.xmlFile.getroot()			# Get the root XML-file in the XML-file.
 		
 		# Read the configuration file.
-		self.timeout = self.ReadTimeout()	# Get the driver's timeout.
+		self.timeout = self.root[2][0].text		# Get the driver's timeout.
 
 	# Read the driver's settings.
 	def ReadSettings(self):
@@ -79,19 +79,19 @@ class Driver:
 class NetworkDriver(Driver):
 	# Init the network driver.
 	def __init__(self, configurationFile):
-		Base.__init__(self, configurationFile)
+		Driver.__init__(self, configurationFile)
 		self.settings = self.ReadSettings()
 
 	# Read the network settings from the configuration file.
 	def ReadSettings(self):
 		# Get IP-address and port for the local endpoint.
 		localIP = self.root[2][2][0].attrib["IP"]
-		localPort = self.root[2][2][0].attrib["Port"]
+		localPort = int(self.root[2][2][0].attrib["Port"])
 		local = (localIP, localPort)
 		
 		# Get IP-address and port for the remote endpoint.
 		remoteIP = self.root[2][2][1].attrib["IP"]
-		remotePort = self.root[2][2][1].attrib["Port"]
+		remotePort = int(self.root[2][2][1].attrib["Port"])
 		remote = (remoteIP, remotePort)
 		
 		# Get the protocol
@@ -103,22 +103,22 @@ class NetworkDriver(Driver):
 class UdpDriver(NetworkDriver):
 	# Init the UDP-driver.
 	def __init__(self, configurationFile):
-		Base.__init__(self, configurationFile)
+		NetworkDriver.__init__(self, configurationFile)
 		
 		# Setup the UDP-socket.
 		self.udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		self.udp.settimeout(self.tiemout)
+		self.udp.settimeout(self.timeout / 1000)	# Convert to float.
 		
 	def Open(self):
 		# Bind to local end point.
-		if self.settings.local:
-			self.udp.bind(self.settings.local)
+		if not self.settings.local:
+			self.udp.bind(self.settings.local[0], self.settings.local[1])
 	
 	def Close(self):
 		self.udp.close()
 	
 	def Send(self, request):
-		self.udp.sendto(request, self.settings.remote)
+		self.udp.sendto(request, (self.settings.remote[0], self.settings.remote[1]))
 		
 	def Receive(self):
 		response, endpoint = self.udp.recvfrom(1024)
@@ -129,19 +129,19 @@ class TcpDriver(NetworkDriver):
 	
 	# Init the TCP-driver.
 	def __init__(self, configurationFile):
-		Base.__init__(self, configurationFile)
+		NetworkDriver.__init__(self, configurationFile)
 		
 		# Setup the TCP-socket.
 		self.tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.tcp.settimeout(self.tiemout)
+		self.tcp.settimeout(self.timeout / 1000)	# Convert to float.
 		
 	def Open(self):
 		# Bind to local end point.
-		if tcp.settings.local:
-			self.tcp.bind(self.settings.local)
+		if not self.settings.local:
+			self.tcp.bind(self.settings.local[0], self.settings.local[1])
 	
 		# Connect to the remote endpoint.
-		self.tcp.connect(self.settings.remote)
+		self.tcp.connect(request, (self.settings.remote[0], self.settings.remote[1]))
 	
 	def Close(self):
 		self.tcp.close()
@@ -157,7 +157,7 @@ class TcpDriver(NetworkDriver):
 class SerialDriver(Driver):
 	# Init the serial driver.
 	def __init__(self, configurationFile):
-		Base.__init__(self, configurationFile)
+		Driver.__init__(self, configurationFile)
 		self.settings = self.ReadSettings()
 
 	# Read the serial settings from the configuration file.
@@ -165,7 +165,7 @@ class SerialDriver(Driver):
 		
 		# Read the serial settings from the configuration file.
 		port = self.root[2][3][0].text
-		baudrate = self.root[2][3][1].text
+		baudRate = self.root[2][3][1].text
 		dataBits = self.root[2][3][2].text
 		parity = self.root[2][3][3].text
 		stopBits = self.root[2][3][4].text
@@ -176,15 +176,15 @@ class SerialDriver(Driver):
 class SerialPort(SerialDriver):
 	# Init the serial port.
 	def __init__(self, configurationFile):
-		Base.__init__(self, configurationFile)
+		SerialDriver.__init__(self, configurationFile)
 		
 		self.ser = serial.Serial()
-		self.ser.port = port
-		self.ser.baudrate = baudrate
-		self.ser.bytesize=dataBits
-		self.ser.parity = parity
-		self.ser.stopbits = stopBits
-		self.ser.timeout = timeout
+		self.ser.port = self.settings.port
+		self.ser.baudRate = self.settings.baudRate
+		self.ser.bytesize = self.settings.dataBits
+		self.ser.parity = self.settings.parity
+		self.ser.stopBits = self.settings.stopBits
+		self.ser.timeout = self.settings.self.timeout / 1000)	# Convert to float.
 	
 	def Open(self):
 		self.ser.open()
@@ -198,6 +198,14 @@ class SerialPort(SerialDriver):
 	def Receive(self):
 		response = self.ser.read(1024)
 		return response
+	
+def PrintData(data):
+	tstr = ""
+	for j in range(len(data)):
+		if j%16 == 0 and j != 0:
+			tstr = tstr + '\n'
+		tstr = tstr + "%02X "%data[j]
+	print(tstr)	
 	
 # =============================================================================
 # === Main ====================================================================
@@ -218,12 +226,12 @@ if sys.argv[2] == None or sys.argv[2] == "":
 	print("Error: No request specified.")
 	sys.exit()
 	
-configurationFile = sys.argv[1]			# Gets the configuration file.
-request = sys.argv[2]					# Gets the request.
+configurationFile = sys.argv[1]				# Gets the configuration file.
+request = bytearray.fromhex(sys.argv[2])	# Gets the request and convert to a byte array.
 
-xmlFile = ET.parse(configurationFile)	# Parse the configuration's XML content.
-root = xmlFile.getroot()				# Gets root element in XML-file.
-type = root[2].attrib["Type"]			# Gets type in XML-file.
+xmlFile = ET.parse(configurationFile)		# Parse the configuration's XML content.
+root = xmlFile.getroot()					# Gets root element in XML-file.
+type = root[2].attrib["Type"]				# Gets type in XML-file.
 
 driver = None	# Represent the driver to send the request and receive the response.
 
@@ -235,7 +243,7 @@ if type == "Network":
 		driver = UdpDriver(configurationFile)	# UDP driver.
 	elif protocol == "TCP":
 		driver = TcpDriver(configurationFile)	# TCP driver.
-	else
+	else:
 		print("Error: Unknown protocol.")
 		sys.exit()
 	
@@ -245,10 +253,17 @@ else:
 	print("Error: Unknown type.")
 	sys.exit()
 
+print(request)
+	
 # Run the driver.
 driver.Open()					# Open connection.
 driver.Send(request)			# Send the request.
 response = driver.Receive()		# Receive the response.
 driver.Close()					# Close connection.
 
-print(response)
+if len(request) == 0:
+	print("Error: No data received.")
+else:
+	#PrintData(response)
+	responseLine = "".join("%02X"%(i) for i in response)
+	print(responseLine)
