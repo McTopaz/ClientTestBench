@@ -48,7 +48,7 @@ class Driver:
 		self.root = self.xmlFile.getroot()			# Get the root XML-file in the XML-file.
 		
 		# Read the configuration file.
-		self.timeout = self.root[2][0].text		# Get the driver's timeout.
+		self.timeout = int(self.root[2][1].text)		# Get the driver's timeout.
 
 	# Read the driver's settings.
 	def ReadSettings(self):
@@ -165,8 +165,8 @@ class SerialDriver(Driver):
 		
 		# Read the serial settings from the configuration file.
 		port = self.root[2][3][0].text
-		baudRate = self.root[2][3][1].text
-		dataBits = self.root[2][3][2].text
+		baudRate = int(self.root[2][3][1].text)
+		dataBits = int(self.root[2][3][2].text)
 		parity = self.root[2][3][3].text
 		stopBits = self.root[2][3][4].text
 		
@@ -178,13 +178,14 @@ class SerialPort(SerialDriver):
 	def __init__(self, configurationFile):
 		SerialDriver.__init__(self, configurationFile)
 		
+		# Setup the serial port.
 		self.ser = serial.Serial()
 		self.ser.port = self.settings.port
-		self.ser.baudRate = self.settings.baudRate
+		self.ser.baudrate = self.settings.baudRate
 		self.ser.bytesize = self.settings.dataBits
 		self.ser.parity = self.settings.parity
 		self.ser.stopBits = self.settings.stopBits
-		self.ser.timeout = self.settings.self.timeout / 1000)	# Convert to float.
+		self.ser.timeout = (self.timeout / 1000)	# Convert to float.
 	
 	def Open(self):
 		self.ser.open()
@@ -226,12 +227,11 @@ if sys.argv[2] == None or sys.argv[2] == "":
 	print("Error: No request specified.")
 	sys.exit()
 	
-configurationFile = sys.argv[1]				# Gets the configuration file.
-request = bytearray.fromhex(sys.argv[2])	# Gets the request and convert to a byte array.
-
-xmlFile = ET.parse(configurationFile)		# Parse the configuration's XML content.
-root = xmlFile.getroot()					# Gets root element in XML-file.
-type = root[2].attrib["Type"]				# Gets type in XML-file.
+configurationFile = sys.argv[1]			# Gets the configuration file.
+request = sys.argv[2]					# Gets the request and convert to a byte array.
+xmlFile = ET.parse(configurationFile)	# Parse the configuration's XML content.
+root = xmlFile.getroot()				# Gets root element in XML-file.
+type = root[2].attrib["Type"]			# Gets type in XML-file.
 
 driver = None	# Represent the driver to send the request and receive the response.
 
@@ -254,6 +254,7 @@ else:
 	sys.exit()
 
 print(request)
+request = bytearray.fromhex(request)
 	
 # Run the driver.
 driver.Open()					# Open connection.
