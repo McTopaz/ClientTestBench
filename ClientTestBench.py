@@ -7,9 +7,9 @@ if len(sys.argv) != 2 or os.path.isfile(sys.argv[1]) == False:
 	print("Error: No configuration file specified.")
 	sys.exit()
 	
-configurationFile = sys.argv[1]			# Gets the configuration file.
-xmlFile = ET.parse(configurationFile)	# Parse the XML-structure in the configurationFile.
-root = xmlFile.getroot()				# Get the root folder in the XML-structure.
+configurationFilePath = sys.argv[1]			# Gets the configuration file.
+xmlFile = ET.parse(configurationFilePath)	# Parse the XML-structure in the configuration file.
+root = xmlFile.getroot()					# Get the root folder in the XML-structure.
 
 # Get all files in the configuration file.
 sourceFilePath = root[0][0].text
@@ -20,13 +20,38 @@ resultFilePath = root[4][0].text
 
 sourceFile = open(sourceFilePath)
 
+# Read from source file.
 for line in sourceFile:
+
+	# Ignore any commented lines.
+	if line.startswith("#"):
+		continue
+		
+	# Get the line to process.
+	line = line.rstrip()
 	line = line.replace(',', ' ')
-	command = "%s, %s"%(requestFilePath, line)
-	print(command)
-	output = subprocess.check_output("dir /b")
-	print(output)
+	print("Line: %s"%(line))
+	
+	# Call request parser.
+	command = "%s %s"%(requestFilePath, line)
+	output = subprocess.check_output(command, shell=True)
+	request = output.decode("ascii").rstrip()
+	print("Request: %s"%(request))
+	
+	# Call driver.
+	command = "%s %s %s"%(driverFilePath, configurationFilePath, request)
+	output = subprocess.check_output(command, shell=True)
+	response = output.decode("ascii").rstrip()
+	print("Response: %s"%(response))
+
+	# Call response parser.
+	command = "%s %s"%(responseFilePath, response)
+	output = subprocess.check_output(command, shell=True)
+	result = output.decode("ascii").rstrip()
+	print("Result:\n%s"%(result))
+	
+	# Write to result file.
+	with open(resultFilePath, "a") as resultFile:
+		resultFile.write(result)
 	
 sourceFile.close()
-	
-
