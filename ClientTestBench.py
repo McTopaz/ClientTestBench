@@ -59,5 +59,6 @@ for line in sourceFile:
 		resultFile.write("\n")
 		resultFile.write("Result:\t%s"%(result.lstrip()))
 		resultFile.write("\n")
+		resultFile.write("\n")
 	
 sourceFile.close()
