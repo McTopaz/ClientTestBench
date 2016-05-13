@@ -86,12 +86,12 @@ class NetworkDriver(Driver):
 	def ReadSettings(self):
 		# Get IP-address and port for the local endpoint.
 		localIP = self.root[2][2][0].attrib["IP"]
-		localPort = int(self.root[2][2][0].attrib["Port"])
+		localPort = self.root[2][2][0].attrib["Port"]
 		local = (localIP, localPort)
 		
 		# Get IP-address and port for the remote endpoint.
 		remoteIP = self.root[2][2][1].attrib["IP"]
-		remotePort = int(self.root[2][2][1].attrib["Port"])
+		remotePort = self.root[2][2][1].attrib["Port"]
 		remote = (remoteIP, remotePort)
 		
 		# Get the protocol
@@ -112,13 +112,13 @@ class UdpDriver(NetworkDriver):
 	def Open(self):
 		# Bind to local end point.
 		if not self.settings.local:
-			self.udp.bind(self.settings.local[0], self.settings.local[1])
+			self.udp.bind(self.settings.local[0], int(self.settings.local[1]))
 	
 	def Close(self):
 		self.udp.close()
 	
 	def Send(self, request):
-		self.udp.sendto(request, (self.settings.remote[0], self.settings.remote[1]))
+		self.udp.sendto(request, (self.settings.remote[0], int(self.settings.remote[1])))
 		
 	def Receive(self):
 		response, endpoint = self.udp.recvfrom(1024)
@@ -138,10 +138,10 @@ class TcpDriver(NetworkDriver):
 	def Open(self):
 		# Bind to local end point.
 		if not self.settings.local:
-			self.tcp.bind(self.settings.local[0], self.settings.local[1])
+			self.tcp.bind(self.settings.local[0], int(self.settings.local[1]))
 	
 		# Connect to the remote endpoint.
-		self.tcp.connect(request, (self.settings.remote[0], self.settings.remote[1]))
+		self.tcp.connect(request, (self.settings.remote[0], int(self.settings.remote[1])))
 	
 	def Close(self):
 		self.tcp.close()
@@ -165,8 +165,8 @@ class SerialDriver(Driver):
 		
 		# Read the serial settings from the configuration file.
 		port = self.root[2][3][0].text
-		baudRate = int(self.root[2][3][1].text)
-		dataBits = int(self.root[2][3][2].text)
+		baudRate = self.root[2][3][1].text
+		dataBits = self.root[2][3][2].text
 		parity = self.root[2][3][3].text
 		stopBits = self.root[2][3][4].text
 		
@@ -181,8 +181,8 @@ class SerialPort(SerialDriver):
 		# Setup the serial port.
 		self.ser = serial.Serial()
 		self.ser.port = self.settings.port
-		self.ser.baudrate = self.settings.baudRate
-		self.ser.bytesize = self.settings.dataBits
+		self.ser.baudrate = int(self.settings.baudRate)
+		self.ser.bytesize = int(self.settings.dataBits)
 		self.ser.parity = self.settings.parity
 		self.ser.stopBits = self.settings.stopBits
 		self.ser.timeout = (self.timeout / 1000)	# Convert to float.
