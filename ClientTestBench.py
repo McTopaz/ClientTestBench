@@ -28,35 +28,36 @@ for line in sourceFile:
 		continue
 		
 	# Get the line to process.
+	line = line.rstrip()
 	data = line.rstrip()
 	parts = data.split(',')
-	data = "".join("\"%s\" "%(part) for part in parts)	# Put " around every argumen: "<arg>".
-	print("Line: %s"%(line))
+	data = "".join("\"%s\" "%(part) for part in parts)	# Put " around every argument: "<arg>".
+	print("Line:\t\t%s"%(line))
 	
 	# Call request parser.
 	command = "%s %s"%(requestFilePath, data)
-	print(command)
 	output = subprocess.check_output(command, shell=True)
 	request = output.decode("ascii").rstrip()
-	print("Request: %s"%(request))
+	print("Request:\t%s"%(request))
 
 	# Call driver.
 	command = "%s %s %s"%(driverFilePath, configurationFilePath, request)
 	output = subprocess.check_output(command, shell=True)
 	response = output.decode("ascii").rstrip()
-	print("Response: %s"%(response))
+	print("Response:\t%s"%(response))
 
 	# Call response parser.
 	command = "%s %s"%(responseFilePath, response)
 	output = subprocess.check_output(command, shell=True)
 	result = output.decode("ascii").rstrip()
-	print("Result:\n%s"%(result))
+	print("Result:\t\t%s"%(result))
+	print("")
 	
 	# Write to result file.
 	with open(resultFilePath, "a") as resultFile:
 		resultFile.write(line.rstrip())
 		resultFile.write(os.linesep)
-		resultFile.write(result.rstrip())
+		resultFile.write(result.lstrip())
 		resultFile.write(os.linesep)
 	
 sourceFile.close()
