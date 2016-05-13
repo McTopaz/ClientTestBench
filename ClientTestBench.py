@@ -55,9 +55,9 @@ for line in sourceFile:
 	
 	# Write to result file.
 	with open(resultFilePath, "a") as resultFile:
-		resultFile.write(line.rstrip())
-		resultFile.write(os.linesep)
-		resultFile.write(result.lstrip())
-		resultFile.write(os.linesep)
+		resultFile.write("Line:\t%s"%(line.rstrip()))
+		resultFile.write("\n")
+		resultFile.write("Result:\t%s"%(result.lstrip()))
+		resultFile.write("\n")
 	
 sourceFile.close()
