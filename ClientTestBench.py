@@ -30,8 +30,8 @@ for line in sourceFile:
 	# Get the line to process.
 	line = line.rstrip()
 	data = line.rstrip()
-	parts = data.split(',')
-	data = "".join("\"%s\" "%(part) for part in parts)	# Put " around every argument: "<arg>".
+	args = data.split(',')
+	data = "".join("\"%s\" "%(arg) for arg in args)	# Put " around every argument: "<arg>".
 	print("Line:\t\t%s"%(line))
 	
 	# Call request parser.
