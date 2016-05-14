@@ -19,6 +19,31 @@ def InputFilePath(header, default):
 		else:
 			pass
 
+# Specify some choices.
+def SpecifyChoices(header, default):
+	while True:
+		print("%s [%s]: "%(header, default), end="")
+		inp = input()
+		
+		# Use default args.
+		if inp == "":
+			return default
+		
+		# Check the given args.
+		parts = inp.split(' ')
+		args = []
+		for part in parts:
+			# Only use arguments which is a digit.
+			if part.isdigit() and not part in args:
+				args.append(part)
+		
+		# Check what arguments to use.
+		if len(args) > 0:
+			args.sort()
+			arguments = "".join("\"%s\","%(arg) for arg in args)	# Put " around every argument: "<arg>".
+			arguments = arguments[:-1] # Cut last comma and space.
+			return arguments
+			
 # Specify a choice from a list of choices.
 def SelectChoice(header, default, choices):
 	line = "".join("%s, "%(choice) for choice in choices)	# Create a line with all choices.
@@ -108,83 +133,102 @@ def AlterConfiguration(xmlFile, saveFilePath):
 	
 	temp = ""	# A default variable to store stuff in.
 	
+	# ======================
 	# === Source section ===
+	# ======================
+	
 	temp = InputFilePath("Specify source file", root[0][0].text)
 	root[0][0].text = temp
 	
+	# ==============================
 	# === Request parser section ===
-	temp = InputFilePath("Specify request file", root[1][0].text)
+	# ==============================
+	
+	temp = InputFilePath("Specify request file", root[1][0].text)	# Request's file.
 	root[1][0].text = temp
+	temp = SpecifyChoices("Select request's args", root[1][1].text)			# Request's arguments.
+	root[1][1].text = temp
 	
+	# ======================
 	# === Driver section ===
-	
-	# Driver's file path.
-	temp = InputFilePath("Specify driver's file", root[2][0].text)
+	# ======================
+	temp = InputFilePath("Specify driver's file", root[2][0].text)	# Driver's file path.
 	root[2][0].text = temp
 	
-	# Driver's timeout.
-	temp = InputValue("Specify driver's timeout", root[2][1].text, 0, 0xFFFFFFFFFFFFFFFF)
+	temp = SpecifyChoices("Select driver's args", root[2][1].text)	# Driver's arguments.
 	root[2][1].text = temp
 	
-		# Driver's type selection.
-	temp = SelectChoice("Select type", root[2].attrib["Type"], ["Network", "Serial"])
+	temp = InputValue("Specify driver's timeout", root[2][2].text, 0, 0xFFFFFFFFFFFFFFFF)	# Driver's timeout.
+	root[2][2].text = temp
+	
+	temp = SelectChoice("Select type", root[2].attrib["Type"], ["Network", "Serial"])	# Driver's type selection.
 	root[2].attrib["Type"] = temp;
 	 
-	# == Driver's network section ====
+	# ================================= 
+	# === Driver's network section ====
+	# =================================
 	if root[2].attrib["Type"] == "Network":
 	
 		# Local end point's IP-address.
-		temp = InputIPaddress("Specify local end point's IP-address", root[2][2][0].attrib["IP"])
-		root[2][2][0].attrib["IP"] = temp
+		temp = InputIPaddress("Specify local end point's IP-address", root[2][3][0].attrib["IP"])
+		root[2][3][0].attrib["IP"] = temp
 		
 		# Local end point's port number.
-		temp = InputValue("Specify local end point's IP-port", root[2][2][0].attrib["Port"], 0x00, 0xFFFF)
-		root[2][2][0].attrib["Port"] = temp
+		temp = InputValue("Specify local end point's IP-port", root[2][3][0].attrib["Port"], 0x00, 0xFFFF)
+		root[2][3][0].attrib["Port"] = temp
 		
 		# Remote end point's IP-address.
-		temp = InputIPaddress("Specify remote end point's IP-address", root[2][2][1].attrib["IP"])
-		root[2][2][1].attrib["IP"] = temp
+		temp = InputIPaddress("Specify remote end point's IP-address", root[2][3][1].attrib["IP"])
+		root[2][3][1].attrib["IP"] = temp
 		
 		# Remote end point's port number.
-		temp = InputValue("Specify remote end point's IP-port", root[2][2][1].attrib["Port"], 0x00, 0xFFFF)
-		root[2][2][1].attrib["Port"] = temp
+		temp = InputValue("Specify remote end point's IP-port", root[2][3][1].attrib["Port"], 0x00, 0xFFFF)
+		root[2][3][1].attrib["Port"] = temp
 		
 		# Network protocol.
-		temp = SelectChoice("Select protocol", root[2][2][2].text, ["UDP", "TCP"])
-		root[2][2][2].text = temp
+		temp = SelectChoice("Select protocol", root[2][3][2].text, ["UDP", "TCP"])
+		root[2][3][2].text = temp
 		
+	# ===============================
 	# === Driver's serial section ===
+	# ===============================
 	elif root[2].attrib["Type"] == "Serial":
 	
 		# Port name
-		temp = InputName("Specify port name", root[2][3][0].text)
-		root[2][3][0].text = temp
+		temp = InputName("Specify port name", root[2][4][0].text)
+		root[2][4][0].text = temp
 		
 		# Baudrate
-		temp = InputValue("Enter baud rate", root[2][3][1].text, 0x01, 0xFFFFFFFF)
-		root[2][3][1].text = temp
+		temp = InputValue("Enter baud rate", root[2][4][1].text, 0x01, 0xFFFFFFFF)
+		root[2][4][1].text = temp
 		
 		# Data bits
-		temp = SelectChoice("Specify data bits", root[2][3][2].text, ["5", "6", "7", "8"])
-		root[2][3][2].text = temp
+		temp = SelectChoice("Specify data bits", root[2][4][2].text, ["5", "6", "7", "8"])
+		root[2][4][2].text = temp
 		
 		# Parity
-		temp = SelectChoice("Specify parity", root[2][3][3].text, ["E", "M", "N", "O", "S"])
-		root[2][3][3].text = temp
+		temp = SelectChoice("Specify parity", root[2][4][3].text, ["E", "M", "N", "O", "S"])
+		root[2][4][3].text = temp
 		
 		# Stop bits
-		temp = SelectChoice("Specify stop bits", root[2][3][4].text, ["0", "1", "1,5", "2"])
-		root[2][3][4].text = temp
+		temp = SelectChoice("Specify stop bits", root[2][4][4].text, ["0", "1", "1,5", "2"])
+		root[2][4][4].text = temp
 		
 	# This state should never happen.
 	else:
 		pass
 	
+	# ===============================
 	# === Response parser section ===
-	temp = InputFilePath("Specify response file:", root[3][0].text)
+	# ===============================
+	temp = InputFilePath("Specify response file:", root[3][0].text)	# Response's file.
 	root[3][0].text = temp
+	temp = SpecifyChoices("Select response's args", root[3][1].text)			# Response's arguments.
+	root[3][1].text = temp
 	
+	# ======================
 	# === Result section ===
+	# ======================
 	temp = InputFilePath("Specify result file:", root[4][0].text)
 	root[4][0].text = temp
 	
@@ -206,39 +250,51 @@ def AlterConfiguration(xmlFile, saveFilePath):
 def CreateDefaultConfiguration():
 	root = ET.Element("ClientTestBench")
 	
-	# Source node.
-	source = ET.SubElement(root, "Source")
-	sourceFile = ET.SubElement(source, "File")
+	# =============
+	# == Source ===
+	# =============
+	source = ET.SubElement(root, "Source")		# Source's node.
+	sourceFile = ET.SubElement(source, "File")	# Source's file.
 	
-	# Request parser node.
-	request = ET.SubElement(root, "RequestParser")
-	requestFile = ET.SubElement(request, "File")
+	# ===============
+	# === Request ===
+	# ===============
+	request = ET.SubElement(root, "RequestParser")	# Request parser node.
+	requestFile = ET.SubElement(request, "File")	# Request's file.
+	args = ET.SubElement(request, "Args")			# Request's arguments from [source-file].
 	
-	# Driver node.
-	driver = ET.SubElement(root, "Driver", Type="")
+	# ==============
+	# === Driver ===
+	# ==============
+	driver = ET.SubElement(root, "Driver", Type="")	# Driver's node.
+	driverFile = ET.SubElement(driver, "File")		# Driver's file path.
+	args = ET.SubElement(driver, "Args")				# Driver's arguments from [source-file].
+	timeout = ET.SubElement(driver, "Timeout")
 	
-	driverFile = ET.SubElement(driver, "File")	# Driver's file path.
-	timeout = ET.SubElement(driver, "Timeout")	# Driver's timeout.
+	# Driver's network.
+	network = ET.SubElement(driver, "Network")							# Driver's network node.
+	local = ET.SubElement(network, "LocalEndPoint", IP="", Port="")
+	remote = ET.SubElement(network, "RemoteEndPoint", IP="", Port="")
+	protocol = ET.SubElement(network, "Protocol")
 	
-	# Driver's network node.
-	network = ET.SubElement(driver, "Network")
-	local = ET.SubElement(network, "LocalEndPoint", IP="", Port="")		# Driver's local end point.
-	remote = ET.SubElement(network, "RemoteEndPoint", IP="", Port="")	# Driver's remote end point.
-	protocol = ET.SubElement(network, "Protocol")						# Driver's protocol.
-	
-	# Driver's serial node.
-	serial = ET.SubElement(driver, "Serial")
+	# Driver's serial.
+	serial = ET.SubElement(driver, "Serial")		# Driver's serial node.
 	port = ET.SubElement(serial, "Port")
 	baudRate = ET.SubElement(serial, "Baudrate")
 	dataBits = ET.SubElement(serial, "DataBits")
 	parity = ET.SubElement(serial, "Parity")
 	stopBits = ET.SubElement(serial, "StopBits")
 	
-	# Response parser node.
-	response = ET.SubElement(root, "ResponseParser")
-	requestFile = ET.SubElement(response, "File")
+	# ================
+	# === Response ===
+	# ================
+	response = ET.SubElement(root, "ResponseParser")	# Response's parser node.
+	requestFile = ET.SubElement(response, "File")		# Response's file.
+	args = ET.SubElement(response, "Args")				# Response's arguments from [source-file].
 	
-	# Result node.
+	# ====================
+	# === Result node ====
+	# ====================
 	result = ET.SubElement(root, "Result")
 	resultFile = ET.SubElement(result, "File")
 	
