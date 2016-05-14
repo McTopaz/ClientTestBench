@@ -26,27 +26,44 @@ for line in sourceFile:
 	# Ignore any commented lines.
 	if line.startswith("#"):
 		continue
-		
-	# Get the line to process.
+	
+	# ===============================
+	# === Get the line to process ===
+	# ===============================
 	line = line.rstrip()
-	data = line.rstrip()
+	data = line
+	
+	# Checks if a comment exist in the line.
+	hasComment = '#' in data	
+	if hasComment:
+		data = data[:data.find('#')]	# Removes the comment section.
+		data = data.strip()				# Removes spaces at end of data.
+
 	args = data.split(',')
 	data = "".join("\"%s\" "%(arg) for arg in args)	# Put " around every argument: "<arg>".
 	print("Line:\t\t%s"%(line))
 	
-	# Call request parser.
+	# ===========================
+	# === Call request parser ===
+	# ===========================
 	command = "%s %s"%(requestFilePath, data)
+	#print("Command: " + command)
+	continue
 	output = subprocess.check_output(command, shell=True)
 	request = output.decode("ascii").rstrip()
 	print("Request:\t%s"%(request))
 
-	# Call driver.
+	# ===================
+	# === Call driver ===
+	# ===================
 	command = "%s %s %s"%(driverFilePath, configurationFilePath, request)
 	output = subprocess.check_output(command, shell=True)
 	response = output.decode("ascii").rstrip()
 	print("Response:\t%s"%(response))
 
-	# Call response parser.
+	# ============================
+	# === Call response parser ===
+	# ============================
 	command = "%s %s"%(responseFilePath, response)
 	output = subprocess.check_output(command, shell=True)
 	result = output.decode("ascii").rstrip()
