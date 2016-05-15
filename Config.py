@@ -29,6 +29,9 @@ def SpecifyChoices(header, default):
 		if inp == "":
 			return default
 		
+		if inp == "none":
+			return ""
+		
 		# Check the given args.
 		parts = inp.split(' ')
 		args = []
