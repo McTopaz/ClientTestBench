@@ -14,7 +14,7 @@ def InputFilePath(header, default):
 			return default
 		# Use specified file.
 		elif os.path.isfile(inp):
-			return inp
+			return os.path.realpath(inp)
 		# Invalid file path given. Try again.
 		else:
 			pass
