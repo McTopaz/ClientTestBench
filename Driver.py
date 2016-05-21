@@ -48,7 +48,7 @@ class Driver:
 		self.root = self.xmlFile.getroot()			# Get the root XML-file in the XML-file.
 		
 		# Read the configuration file.
-		self.timeout = int(self.root[2][1].text)		# Get the driver's timeout.
+		self.timeout = int(self.root[2][2].text)		# Get the driver's timeout.
 
 	# Read the driver's settings.
 	def ReadSettings(self):
@@ -85,17 +85,17 @@ class NetworkDriver(Driver):
 	# Read the network settings from the configuration file.
 	def ReadSettings(self):
 		# Get IP-address and port for the local endpoint.
-		localIP = self.root[2][2][0].attrib["IP"]
-		localPort = self.root[2][2][0].attrib["Port"]
+		localIP = self.root[2][3][0].attrib["IP"]
+		localPort = self.root[2][3][0].attrib["Port"]
 		local = (localIP, localPort)
 		
 		# Get IP-address and port for the remote endpoint.
-		remoteIP = self.root[2][2][1].attrib["IP"]
-		remotePort = self.root[2][2][1].attrib["Port"]
+		remoteIP = self.root[2][3][1].attrib["IP"]
+		remotePort = self.root[2][3][1].attrib["Port"]
 		remote = (remoteIP, remotePort)
 		
 		# Get the protocol
-		protocol = self.root[2][2][2].text
+		protocol = self.root[2][3][2].text
 		
 		return NetworkSettings(local, remote, protocol)
 
@@ -164,11 +164,11 @@ class SerialDriver(Driver):
 	def ReadSettings(self):
 		
 		# Read the serial settings from the configuration file.
-		port = self.root[2][3][0].text
-		baudRate = self.root[2][3][1].text
-		dataBits = self.root[2][3][2].text
-		parity = self.root[2][3][3].text
-		stopBits = self.root[2][3][4].text
+		port = self.root[2][4][0].text
+		baudRate = self.root[2][4][1].text
+		dataBits = self.root[2][4][2].text
+		parity = self.root[2][4][3].text
+		stopBits = self.root[2][4][4].text
 		
 		return SerialSettings(port, baudRate, dataBits, parity, stopBits)
 
@@ -237,7 +237,7 @@ driver = None	# Represent the driver to send the request and receive the respons
 
 # Get what driver to use.
 if type == "Network":
-	protocol = root[2][2][2].text
+	protocol = root[2][3][2].text
 	
 	if protocol == "UDP":
 		driver = UdpDriver(configurationFile)	# UDP driver.
