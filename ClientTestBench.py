@@ -19,7 +19,7 @@ def IncludeSourceFilesArgsInCommand(fileArgs, sourceFileArgs):
         index -= 1                                  # Decrement the index so, for instance, '1' point to the source-file's '0' index.
         commandArgs.append(sourceFileArgs[index])   # Store the arguments for the command.
     
-    commandArgLine = "".join("\"%s\","%(arg) for arg in commandArgs)    # A string with the file's arguments form the source-file.
+    commandArgLine = "".join("\"%s\" "%(arg) for arg in commandArgs)    # A string with the file's arguments form the source-file.
     commandArgLine = commandArgLine[:-1]                                # Cut last comma and space.
     return commandArgLine
 
@@ -75,30 +75,46 @@ for line in sourceFile:
     # ===========================
     args = IncludeSourceFilesArgsInCommand(requestFileArgs, sorceFileArgs)
     command = "%s %s %s"%(requestFilePath, args, data)
-    print("Request command:\t" + command)
     output = subprocess.check_output(command, shell=True)
     request = output.decode("ascii").rstrip()
-    #print("Request:\t%s"%(request))
+    
+    print("")
+    print("Request")
+    print("\t* File:\t\t" + requestFilePath)
+    print("\t* Args:\t\t%s%s"%(args + " " if len(args) > 0 else "", sorceFileArgs))
+    print("\t* Command:\t" + command)
+    print("\t* Request:\t" + request)
 
     # ===================
     # === Call driver ===
     # ===================
     args = IncludeSourceFilesArgsInCommand(driverFileArgs, sorceFileArgs)
     command = "%s %s %s %s"%(driverFilePath, configurationFilePath, args, request)
-    print("Driver command:\t" + command)
     output = subprocess.check_output(command, shell=True)
     response = output.decode("ascii").rstrip()
-    #print("Response:\t%s"%(response))
+    
+    print("")
+    print("Driver")
+    print("\t* File:\t\t" + requestFilePath)
+    print("\t* Args:\t\t%s%s"%(args + " " if len(args) > 0 else "", request))
+    print("\t* Command:\t" + command)
+    print("\t* Response:\t" + response)
 
     # ============================
     # === Call response parser ===
     # ============================
     args = IncludeSourceFilesArgsInCommand(responseFileArgs, sorceFileArgs)
     command = "%s %s %s"%(responseFilePath, args, response)
-    print("Response command:\t" + command)
     output = subprocess.check_output(command, shell=True)
     result = output.decode("ascii").rstrip()
-    print("Result:\t\t%s"%(result))
+    
+    print("")
+    print("Response")
+    print("\t* File:\t\t" + responseFilePath)
+    print("\t* Args:\t\t%s%s"%(args + " " if len(args) > 0 else "", response))
+    print("\t* Command:\t" + command)
+    print("\t* Result:\t" + result)
+  
     print("")
 
     # Write to result file.
